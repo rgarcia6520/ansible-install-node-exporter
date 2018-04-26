@@ -1,0 +1,9 @@
+---
+- name: Deploy node_exporter on host
+  gather_facts: true
+  hosts: host01
+  tasks:
+  - set_fact: ansible_ssh_private_key_file=/var/lib/jenkins/.ssh/id_rsa
+  - include: tasks/main.yml
+  vars_files:
+  - defaults/main.yml

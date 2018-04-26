@@ -1,0 +1,16 @@
+[Unit]
+Description=Node Exporter
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+User=node_exporter
+RuntimeDirectory=node_exporter
+ExecStart=/bin/sh -c "/sbin/node_exporter"
+ExecStartPost=/bin/sh -c "echo $MAINPID > /run/node_exporter/node_exporter.pid"
+ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/run/node_exporter/node_exporter.pid
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

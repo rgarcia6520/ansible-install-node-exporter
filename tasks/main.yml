@@ -1,0 +1,64 @@
+---
+- name: Create node_exporter system user
+  become: yes
+  user: 
+   name: node_exporter
+   create_home: no
+   comment: "node_exporter system account"
+   shell: /sbin/nologin
+  tags: user
+
+- name: Download the tar ball for node_exporter
+  become: yes
+  unarchive:
+    src: "{{ item }}"
+    dest: /tmp/
+    remote_src: yes
+  with_items: "{{ node_exporter.url }}"
+
+- name: Copy node_exporter executable to sbin
+  become: yes
+  shell: "cp /tmp/{{ item }}/node_exporter /sbin/node_exporter" 
+  with_items: "{{ node_exporter.version }}"
+
+- name: Copy over systemd service for node exporter
+  become: yes
+  copy:
+    src: ../files/node_exporter.service
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Start and enable node expoter service
+  become: yes
+  systemd: 
+    name: node_exporter 
+    state: started
+    enabled: yes
+  tags: service
+
+- name: open node_exporter port on system
+  become: yes
+  iptables:
+    chain: IN_public_allow
+    destination_port: 9100
+    protocol: tcp
+    match: tcp
+    match: state
+    ctstate: NEW,ESTABLISHED
+    jump: ACCEPT
+  tags: iptables
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: open node_exporter port on system
+  become: yes
+  iptables:
+    chain: INPUT
+    destination_port: 9100
+    protocol: tcp
+    match: tcp
+    match: state
+    ctstate: NEW,ESTABLISHED
+    jump: ACCEPT
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
